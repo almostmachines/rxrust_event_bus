@@ -10,6 +10,12 @@ pub struct EventBus<E> {
     inner: EventBusInner<E>,
 }
 
+impl<E: Clone + 'static> Default for EventBus<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<E: Clone + 'static> EventBus<E> {
     pub fn new() -> Self {
         Self {
