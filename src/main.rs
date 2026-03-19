@@ -7,33 +7,33 @@ enum AppEvent {
     SaveFinished { ok: bool },
 }
 
-type AppBusInner = LocalSubject<'static, AppEvent, Infallible>;
-type AppEventStream = LocalBoxedObservableClone<'static, AppEvent, Infallible>;
+type EventBusInner<E> = LocalSubject<'static, E, Infallible>;
+type EventStream<E> = LocalBoxedObservableClone<'static, E, Infallible>;
 
 #[derive(Clone)]
-struct EventBus {
-    inner: AppBusInner,
+struct EventBus<E> {
+    inner: EventBusInner<E>,
 }
 
-impl EventBus {
+impl<E: Clone + 'static> EventBus<E> {
     fn new() -> Self {
         Self {
-            inner: Local::subject::<AppEvent, Infallible>(),
+            inner: Local::subject::<E, Infallible>(),
         }
     }
 
-    fn publish(&self, event: AppEvent) {
+    fn publish(&self, event: E) {
         let mut subject = self.inner.clone();
         subject.next(event);
     }
 
-    fn events(&self) -> AppEventStream {
+    fn events(&self) -> EventStream<E> {
         self.inner.clone().box_it_clone()
     }
 
-    fn subscribe<F>(&self, handler: F) -> impl Subscription + use<F>
-where
-        F: FnMut(AppEvent) + 'static,
+    fn subscribe<F>(&self, handler: F) -> impl Subscription + use<E, F>
+    where
+        F: FnMut(E) + 'static,
     {
         self.events().subscribe(handler)
     }
@@ -45,7 +45,7 @@ struct SaveStats {
 }
 
 impl SaveStats {
-    fn new(bus: EventBus) -> Self {
+    fn new(bus: EventBus<AppEvent>) -> Self {
         let successful_saves = Rc::new(RefCell::new(0));
         let successful_saves_for_handler = successful_saves.clone();
 
@@ -79,7 +79,7 @@ struct StatusPanel {
 }
 
 impl StatusPanel {
-    fn new(bus: EventBus) -> Self {
+    fn new(bus: EventBus<AppEvent>) -> Self {
         let status_text = Rc::new(RefCell::new(String::from("Idle")));
         let status_text_for_handler = status_text.clone();
 
@@ -108,7 +108,7 @@ impl StatusPanel {
 }
 
 fn main() {
-    let bus = EventBus::new();
+    let bus = EventBus::<AppEvent>::new();
     let stats = SaveStats::new(bus.clone());
     let status_panel = StatusPanel::new(bus.clone());
 

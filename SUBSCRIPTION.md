@@ -31,7 +31,7 @@ The real issue was the wrapper method signature:
 ```rust
 fn subscribe<F>(&self, handler: F) -> impl Subscription
 where
-    F: FnMut(AppEvent) + 'static,
+    F: FnMut(E) + 'static,
 ```
 
 In Rust 2024, return-position `impl Trait` captures more lifetimes by default.
@@ -60,16 +60,16 @@ Those cannot both be true, so Rust rejected the code and pointed at `bus`.
 We made the capture set explicit:
 
 ```rust
-fn subscribe<F>(&self, handler: F) -> impl Subscription + use<F>
+fn subscribe<F>(&self, handler: F) -> impl Subscription + use<E, F>
 where
-    F: FnMut(AppEvent) + 'static,
+    F: FnMut(E) + 'static,
 {
     self.inner.clone().subscribe(handler)
 }
 ```
 
-`use<F>` tells Rust that the opaque return type may depend on `F`, but should
-not capture the lifetime of `&self`.
+`use<E, F>` tells Rust that the opaque return type may depend on the event type
+and the handler type, but should not capture the lifetime of `&self`.
 
 That matches the real behavior of the code:
 
@@ -97,4 +97,4 @@ After this change, `cargo check` passes.
 When a Rust 2024 method returns `impl Trait` from a `&self` receiver, the
 opaque return type may capture the receiver lifetime unless you say otherwise.
 If the returned value is really owned, use precise capture syntax such as
-`use<F>` to prevent accidental over-capture.
+`use<E, F>` to prevent accidental over-capture.
