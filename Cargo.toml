@@ -5,3 +5,6 @@ edition = "2024"
 
 [dependencies]
 rxrust = "1.0.0-rc.3"
+
+[[example]]
+name = "example1"
