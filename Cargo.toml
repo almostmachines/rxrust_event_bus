@@ -1,5 +1,5 @@
 [package]
-authors = "John King <jk@almostmachines.dev>"
+authors = "[John King <jk@almostmachines.dev>]"
 categories = ["asynchronous"]
 description = "A simple, agnostic reactive extensions event bus utilising rxRust under the hood."
 edition = "2024"
