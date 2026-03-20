@@ -9,7 +9,7 @@ license = "MIT"
 name = "rx_event_bus"
 readme = "README.md"
 repository = "https://github.com/almostmachines/rx_event_bus"
-version = "0.1.1"
+version = "0.1.2"
 
 [dependencies]
 rxrust = "1.0.0-rc.3"
