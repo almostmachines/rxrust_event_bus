@@ -1,5 +1,5 @@
 use rxrust::Observable;
-use rxrust_event_bus::EventBus;
+use rxrust_event_bus::LocalEventBus;
 
 #[derive(Clone, Debug)]
 enum ChatEvent {
@@ -33,7 +33,7 @@ fn validate(event: ChatEvent) -> Result<ChatEvent, ChatError> {
 }
 
 fn main() {
-    let bus = EventBus::new(validate);
+    let bus = LocalEventBus::new(validate);
 
     // Subscribe to all events
     bus.subscribe(|event| {

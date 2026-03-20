@@ -1,6 +1,6 @@
 # Subscription Lifetime Note
 
-This project hit a Rust 2024 lifetime error around `EventBus::subscribe` in
+This project hit a Rust 2024 lifetime error around `LocalEventBus::subscribe` in
 `src/main.rs`.
 
 ## The symptom
@@ -74,7 +74,7 @@ and the handler type, but should not capture the lifetime of `&self`.
 That matches the real behavior of the code:
 
 - the handler type matters
-- the returned subscription does not borrow `EventBus`
+- the returned subscription does not borrow `LocalEventBus`
 
 After this change, `cargo check` passes.
 

@@ -1,3 +1,3 @@
-mod event_bus;
+mod local_event_bus;
 
-pub use event_bus::EventBus;
+pub use local_event_bus::LocalEventBus;

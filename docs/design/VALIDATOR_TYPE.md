@@ -1,8 +1,8 @@
-# EventBus Validator Clone Discussion
+# LocalEventBus Validator Clone Discussion
 
 ## Problem
 
-`EventBus` currently derives `Clone`, but one of its fields is:
+`LocalEventBus` currently derives `Clone`, but one of its fields is:
 
 ```rust
 type EventValidator<E, V> = Box<dyn Fn(E) -> Result<E, V>>;
@@ -13,19 +13,19 @@ type EventValidator<E, V> = Box<dyn Fn(E) -> Result<E, V>>;
 fails.
 
 The real design question is not just "how do we make the compiler happy?"
-It is "what cloning an `EventBus` should mean for users of this library?"
+It is "what cloning an `LocalEventBus` should mean for users of this library?"
 
 ## What We Want To Optimize For
 
 For this library, the main user-facing concerns are:
 
-- Can callers pass ordinary closures to `EventBus::new`?
+- Can callers pass ordinary closures to `LocalEventBus::new`?
 - Can the bus itself still be cloned ergonomically?
 - Does the API stay simple in function signatures and struct fields?
 - Does the design match the current `rxrust::Local` single-threaded model?
 - Are we adding complexity or dependencies that the project does not need?
 
-## Option 1: Remove `Clone` From `EventBus`
+## Option 1: Remove `Clone` From `LocalEventBus`
 
 ### Shape
 
@@ -35,13 +35,13 @@ Keep the validator as:
 type EventValidator<E, V> = Box<dyn Fn(E) -> Result<E, V>>;
 ```
 
-but remove `#[derive(Clone)]` from `EventBus`.
+but remove `#[derive(Clone)]` from `LocalEventBus`.
 
 ### What This Means For Library Users
 
 Users can still create the bus with a capturing closure and use it normally.
 The difference is that the bus becomes a single-owner value unless the caller
-wraps it themselves in `Rc<EventBus<...>>` or `Arc<EventBus<...>>`.
+wraps it themselves in `Rc<LocalEventBus<...>>` or `Arc<LocalEventBus<...>>`.
 
 ### Pros
 
@@ -99,7 +99,7 @@ type EventValidator<E, V> = Arc<dyn Fn(E) -> Result<E, V> + Send + Sync>;
 
 ### What This Means For Library Users
 
-Users still pass ordinary closures to `EventBus::new`. `EventBus` stays
+Users still pass ordinary closures to `LocalEventBus::new`. `LocalEventBus` stays
 cloneable, and every clone shares the same validator.
 
 This is usually the most ergonomic library API because callers do not need to
@@ -107,7 +107,7 @@ know or care how the validator is stored internally.
 
 ### Pros
 
-- Keeps `EventBus: Clone`.
+- Keeps `LocalEventBus: Clone`.
 - Keeps constructor usage simple for callers.
 - Works well with capturing closures.
 - No extra crate is needed.
@@ -134,11 +134,11 @@ the bus to be cloned, and is comfortable with shared validator behavior.
 ### Shape
 
 ```rust
-pub struct EventBus<E, V, F>
+pub struct LocalEventBus<E, V, F>
 where
     F: Fn(E) -> Result<E, V>,
 {
-    inner: EventBusInner<E>,
+    inner: LocalEventBusInner<E>,
     validate: F,
 }
 ```
@@ -151,7 +151,7 @@ For straightforward construction, this can still feel nice because type
 inference usually figures out `F`:
 
 ```rust
-let bus = EventBus::new(|event| Ok(event));
+let bus = LocalEventBus::new(|event| Ok(event));
 ```
 
 The tradeoff appears when users need to mention the type in public APIs, struct
@@ -167,7 +167,7 @@ the bus type, which can make signatures much more verbose.
 
 ### Cons
 
-- The public type becomes more complex: `EventBus<E, V, F>`.
+- The public type becomes more complex: `LocalEventBus<E, V, F>`.
 - Callers may need extra generics in their own code just to store or pass a
   bus around.
 - Different validators produce different bus types, which makes heterogeneous
@@ -234,7 +234,7 @@ cloning only works when the concrete closure type is actually cloneable.
 ### Pros
 
 - Preserves a compact trait-object based API.
-- Keeps `EventBus: Clone` available.
+- Keeps `LocalEventBus: Clone` available.
 - Allows each bus clone to own a cloned validator value rather than just
   another shared pointer to the same validator handle.
 
@@ -260,7 +260,7 @@ best default.
 Why:
 
 - It keeps the library easy to use.
-- It preserves `EventBus: Clone`.
+- It preserves `LocalEventBus: Clone`.
 - It lets users pass ordinary capturing closures.
 - It matches the current `rxrust::Local` single-threaded design.
 - It avoids adding a dependency purely to clone a validator.
