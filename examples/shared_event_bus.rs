@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
+use rx_event_bus::SharedEventBus;
 use rxrust::Observable;
-use rxrust_event_bus::SharedEventBus;
 
 #[derive(Clone, Debug)]
 enum ChatEvent {

@@ -1,5 +1,5 @@
+use rx_event_bus::LocalEventBus;
 use rxrust::Observable;
-use rxrust_event_bus::LocalEventBus;
 
 #[derive(Clone, Debug)]
 enum ChatEvent {

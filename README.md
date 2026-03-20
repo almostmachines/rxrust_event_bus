@@ -1,4 +1,4 @@
-# rxRust event bus
+# RX Event Bus
 
 A demo event bus using rxRust.
 
